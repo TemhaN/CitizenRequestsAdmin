@@ -1,0 +1,41 @@
+﻿<Window x:Class="CitizenRequestsAdmin.EditCategoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Редактирование категории" Height="220" Width="550"
+        Style="{StaticResource MaterialDesignWindow}">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Название категории -->
+        <Label Content="Название категории" Grid.Row="0" Grid.Column="0" Margin="5" VerticalAlignment="Center"
+               Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="CategoryNameBox" Grid.Row="0" Grid.Column="1" Margin="5"
+                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Описание -->
+        <Label Content="Описание" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center"
+               Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="CategoryDescriptionBox" Grid.Row="1" Grid.Column="1" Margin="5"
+                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Кнопки -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="5">
+            <Button Content="Сохранить" Click="SaveCategory_Click" Width="130" Margin="5"
+                    Style="{StaticResource MaterialDesignFlatButton}"/>
+            <Button Content="Отмена" Click="CloseWindow_Click" Width="100" Margin="5"
+                    Style="{StaticResource MaterialDesignFlatButton}"/>
+        </StackPanel>
+    </Grid>
+</Window>

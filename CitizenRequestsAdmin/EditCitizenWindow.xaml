@@ -1,0 +1,47 @@
+﻿<Window x:Class="CitizenRequestsAdmin.EditCitizenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Редактирование гражданина" Height="360" Width="450"
+        Style="{StaticResource MaterialDesignWindow}">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ФИО -->
+        <Label Content="ФИО" Grid.Row="0" Grid.Column="0" Margin="5" VerticalAlignment="Center" Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="FullNameBox" Grid.Row="0" Grid.Column="1" Margin="5" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Email -->
+        <Label Content="Email" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="EmailBox" Grid.Row="1" Grid.Column="1" Margin="5" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Номер телефона -->
+        <Label Content="Номер телефона" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="PhoneNumberBox" Grid.Row="2" Grid.Column="1" Margin="5" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Адрес -->
+        <Label Content="Адрес" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center" Style="{StaticResource MaterialDesignLabel}"/>
+        <TextBox x:Name="AddressBox" Grid.Row="3" Grid.Column="1" Margin="5" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+        <!-- Кнопки -->
+        <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="5">
+            <Button Content="Сохранить" Click="SaveCitizen_Click" Width="130" Margin="5" Style="{StaticResource MaterialDesignFlatButton}"/>
+            <Button Content="Отмена" Click="CloseWindow_Click" Width="100" Margin="5" Style="{StaticResource MaterialDesignFlatButton}"/>
+        </StackPanel>
+    </Grid>
+
+</Window>
