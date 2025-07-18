@@ -6,19 +6,16 @@ namespace CitizenRequestsAdmin
 {
     public partial class ResponseEditorWindow : Window
     {
+        private readonly int _applicationId;
+        private readonly int _adminId;
         private readonly string _connectionString = "Server=TEMHANLAPTOP\\TDG2022;Database=CitizenRequestsDB;Integrated Security=True;";
-        private int _applicationId;
-        private int? _responseId = null;
-        private int _adminId = 1; // Заменить на ID текущего администратора
 
-        public ResponseEditorWindow(int applicationId, int? responseId = null)
+        public ResponseEditorWindow(int applicationId, int adminId)
         {
             InitializeComponent();
             _applicationId = applicationId;
-            _responseId = responseId;
-
-            if (_responseId.HasValue)
-                LoadResponse();
+            _adminId = adminId;
+            LoadResponse();
         }
 
         private void LoadResponse()
@@ -26,52 +23,39 @@ namespace CitizenRequestsAdmin
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                SqlCommand cmd = new SqlCommand("SELECT ResponseText FROM Responses WHERE ResponseId = @ResponseId", connection);
-                cmd.Parameters.AddWithValue("@ResponseId", _responseId);
-                object result = cmd.ExecuteScalar();
-                if (result != null)
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT ResponseText FROM Responses WHERE ApplicationId = @ApplicationId AND IsFromCitizen = 0", connection);
+                cmd.Parameters.AddWithValue("@ApplicationId", _applicationId);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    ResponseTextBox.Text = result.ToString();
+                    ResponseTextBox.Text = reader["ResponseText"].ToString();
                 }
+                reader.Close();
             }
         }
-
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
         private void SaveResponse_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(ResponseTextBox.Text))
-            {
-                MessageBox.Show("Ответ не может быть пустым!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                if (_responseId.HasValue)
-                {
-                    // Обновление существующего ответа
-                    SqlCommand cmd = new SqlCommand("UPDATE Responses SET ResponseText = @ResponseText, ResponseDate = GETDATE() WHERE ResponseId = @ResponseId", connection);
-                    cmd.Parameters.AddWithValue("@ResponseText", ResponseTextBox.Text);
-                    cmd.Parameters.AddWithValue("@ResponseId", _responseId);
-                    cmd.ExecuteNonQuery();
-                }
-                else
-                {
-                    // Добавление нового ответа
-                    SqlCommand cmd = new SqlCommand("INSERT INTO Responses (ApplicationId, AdminId, ResponseText, ResponseDate) VALUES (@ApplicationId, @AdminId, @ResponseText, GETDATE())", connection);
-                    cmd.Parameters.AddWithValue("@ApplicationId", _applicationId);
-                    cmd.Parameters.AddWithValue("@AdminId", _adminId);
-                    cmd.Parameters.AddWithValue("@ResponseText", ResponseTextBox.Text);
-                    cmd.ExecuteNonQuery();
-                }
+                SqlCommand cmd = new SqlCommand(
+                    @"IF EXISTS (SELECT 1 FROM Responses WHERE ApplicationId = @ApplicationId AND IsFromCitizen = 0)
+                        UPDATE Responses SET ResponseText = @ResponseText, SentAt = @SentAt, SenderId = @SenderId
+                        WHERE ApplicationId = @ApplicationId AND IsFromCitizen = 0
+                      ELSE
+                        INSERT INTO Responses (ApplicationId, ResponseText, SentAt, IsFromCitizen, SenderId)
+                        VALUES (@ApplicationId, @ResponseText, @SentAt, 0, @SenderId)", connection);
+                cmd.Parameters.AddWithValue("@ApplicationId", _applicationId);
+                cmd.Parameters.AddWithValue("@ResponseText", ResponseTextBox.Text);
+                cmd.Parameters.AddWithValue("@SentAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@SenderId", _adminId);
+                cmd.ExecuteNonQuery();
             }
-
-            DialogResult = true;
-            Close();
-        }
-
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
             Close();
         }
     }

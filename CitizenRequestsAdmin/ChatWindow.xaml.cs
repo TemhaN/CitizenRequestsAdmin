@@ -23,9 +23,8 @@ namespace CitizenRequestsAdmin
         {
             InitializeComponent();
             _applicationId = applicationId;
-            _adminId = adminId; // Устанавливаем ID админа
+            _adminId = adminId;
 
-            // Настраиваем таймер на обновление чата каждые 5 секунд
             _chatRefreshTimer = new System.Windows.Threading.DispatcherTimer();
             _chatRefreshTimer.Interval = TimeSpan.FromSeconds(5);
             _chatRefreshTimer.Tick += (s, e) => LoadChat();
@@ -39,37 +38,8 @@ namespace CitizenRequestsAdmin
 
         private void PrepareAutoGreeting()
         {
-            // Заполняем поле ввода, но не отправляем
             ResponseTextBox.Text = "Здравствуйте, чем могу помочь?";
         }
-
-
-//private void ChatListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-//{
-//    if (ChatListBox.SelectedItem is ChatMessage selectedMessage)
-//    {
-//        _selectedMessage = selectedMessage;
-
-//        // Пройтись по всем элементам и сбросить выделение
-//        foreach (var item in ChatListBox.Items)
-//        {
-//            if (ChatListBox.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem listBoxItem &&
-//                listBoxItem.ContentTemplate.FindName("MessageBorder", listBoxItem) is Border border)
-//            {
-//                border.BorderBrush = Brushes.Transparent;
-//            }
-//        }
-
-//        // Подсветить выбранный элемент
-//        if (ChatListBox.ItemContainerGenerator.ContainerFromItem(_selectedMessage) is ListBoxItem selectedItem &&
-//            selectedItem.ContentTemplate.FindName("MessageBorder", selectedItem) is Border selectedBorder)
-//        {
-//            selectedBorder.BorderBrush = Brushes.Red;
-//        }
-//    }
-//}
-
-
 
         private void LoadApplicationDetails()
         {
@@ -103,7 +73,6 @@ namespace CitizenRequestsAdmin
             return null;
         }
 
-        // Обновленный метод LoadChat
         private void LoadChat()
         {
             ChatListBox.Items.Clear();
@@ -149,24 +118,6 @@ namespace CitizenRequestsAdmin
             }
         }
 
-
-        //private void SendAutoGreeting()
-        //{
-        //    using (SqlConnection connection = new SqlConnection(_connectionString))
-        //    {
-        //        connection.Open();
-        //        string query = "INSERT INTO Responses (ApplicationId, AdminId, ResponseText, ResponseDate, IsFromCitizen) " +
-        //                       "VALUES (@ApplicationId, @AdminId, @ResponseText, GETDATE(), 0)";
-        //        using (SqlCommand cmd = new SqlCommand(query, connection))
-        //        {
-        //            cmd.Parameters.AddWithValue("@ApplicationId", _applicationId);
-        //            cmd.Parameters.AddWithValue("@AdminId", _adminId);
-        //            cmd.Parameters.AddWithValue("@ResponseText", "Здравствуйте, чем могу помочь?");
-        //            cmd.ExecuteNonQuery();
-        //        }
-        //    }
-        //    LoadChat();
-        //}
 
         private void SendResponse_Click(object sender, RoutedEventArgs e)
         {

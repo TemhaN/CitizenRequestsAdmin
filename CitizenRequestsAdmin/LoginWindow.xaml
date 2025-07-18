@@ -9,25 +9,20 @@
     <Grid Background="{DynamicResource BackgroundColor}">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="350">
 
-            <!-- Логотип или заголовок -->
             <TextBlock FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="{DynamicResource PrimaryColor}">
                 Вход в систему
             </TextBlock>
 
-            <!-- Текст, подчеркивающий, что это государственная система -->
             <TextBlock FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="{DynamicResource TextColor}" TextWrapping="Wrap">
                 Государственная система по обработке обращений пользователей
             </TextBlock>
 
-            <!-- Email -->
             <TextBlock Text="Email" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,0,5" Foreground="{DynamicResource TextColor}"/>
             <TextBox x:Name="EmailTextBox" HorizontalAlignment="Stretch" Height="40" Margin="0,0,0,20" Padding="10" FontSize="14" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource InputBackgroundColor}" Foreground="{DynamicResource TextColor}"/>
 
-            <!-- Пароль -->
             <TextBlock Text="Пароль" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,0,5" Foreground="{DynamicResource TextColor}"/>
             <PasswordBox x:Name="PasswordBox" HorizontalAlignment="Stretch" Height="40" Margin="0,0,0,30" Padding="10" FontSize="14" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource InputBackgroundColor}" Foreground="{DynamicResource TextColor}"/>
 
-            <!-- Кнопка входа -->
             <Button Content="Войти" HorizontalAlignment="Stretch" Height="45" Background="{DynamicResource ButtonBackgroundColor}" Foreground="White" FontWeight="Bold"
                     VerticalAlignment="Center" Click="LoginButton_Click" BorderBrush="Transparent" />
         </StackPanel>

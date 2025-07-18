@@ -8,7 +8,7 @@ namespace CitizenRequestsAdmin
     public partial class LoginWindow : Window
     {
         private readonly string _connectionString = "Server=TEMHANLAPTOP\\TDG2022;Database=CitizenRequestsDB;Integrated Security=True;";
-        public int AdminId { get; private set; } // Сохраняем ID админа
+        public int AdminId { get; private set; }
 
         public LoginWindow()
         {
@@ -24,7 +24,7 @@ namespace CitizenRequestsAdmin
             int adminId = AuthenticateAdmin(email, password);
             if (adminId > 0)
             {
-                AdminId = adminId; // Сохраняем ID админа
+                AdminId = adminId;
                 DialogResult = true;
                 Close();
             }
@@ -47,7 +47,7 @@ namespace CitizenRequestsAdmin
                     cmd.Parameters.AddWithValue("@Password", password);
 
                     object result = cmd.ExecuteScalar();
-                    return result != null ? Convert.ToInt32(result) : 0; // Если не найдено, возвращаем 0
+                    return result != null ? Convert.ToInt32(result) : 0;
                 }
             }
         }

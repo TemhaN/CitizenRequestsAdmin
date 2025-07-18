@@ -18,19 +18,16 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Название категории -->
         <Label Content="Название категории" Grid.Row="0" Grid.Column="0" Margin="5" VerticalAlignment="Center"
                Style="{StaticResource MaterialDesignLabel}"/>
         <TextBox x:Name="CategoryNameBox" Grid.Row="0" Grid.Column="1" Margin="5"
                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-        <!-- Описание -->
         <Label Content="Описание" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center"
                Style="{StaticResource MaterialDesignLabel}"/>
         <TextBox x:Name="CategoryDescriptionBox" Grid.Row="1" Grid.Column="1" Margin="5"
                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-        <!-- Кнопки -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="5">
             <Button Content="Сохранить" Click="SaveCategory_Click" Width="130" Margin="5"
                     Style="{StaticResource MaterialDesignFlatButton}"/>

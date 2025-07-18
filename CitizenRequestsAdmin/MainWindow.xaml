@@ -3,11 +3,35 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:CitizenRequestsAdmin"
-        Title="Админ-Панель" Height="600" Width="1200"
-        Style="{StaticResource MaterialDesignWindow}">
-
-    <Grid Background="{DynamicResource BackgroundColor}">
-        <TabControl x:Name="MainTabControl">
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        Title="Админ-Панель" Height="950" Width="1300">
+    <Window.Resources>
+        <Style x:Key="MaterialDesignComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFloatingHintComboBox}"/>
+        <Style x:Key="MaterialDesignDataGrid" TargetType="DataGrid" BasedOn="{StaticResource MaterialDesignDataGrid}"/>
+        <Style x:Key="MaterialDesignRaisedButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}"/>
+        <Style x:Key="MaterialDesignFlatButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}"/>
+        <Style x:Key="MaterialDesignDatePicker" TargetType="DatePicker" BasedOn="{StaticResource MaterialDesignDatePicker}"/>
+        <local:AnsweredToBackgroundConverter x:Key="AnsweredToBackgroundConverter"/>
+        <local:AnsweredToVisibilityConverter x:Key="AnsweredToVisibilityConverter"/>
+        <local:DescriptionToWidthConverter x:Key="DescriptionToWidthConverter"/>
+        <local:AnsweredToShadowConverter x:Key="AnsweredToShadowConverter"/>
+        <local:StatusToBackgroundConverter x:Key="StatusToBackgroundConverter"/>
+        <local:WidthToCardWidthConverter x:Key="WidthToCardWidthConverter"/>
+        <local:AnsweredToBorderConverter x:Key="AnsweredToBorderConverter"/>
+        <Style x:Key="CardStyle" TargetType="materialDesign:Card" BasedOn="{StaticResource {x:Type materialDesign:Card}}">
+            <Setter Property="MinWidth" Value="300"/>
+            <Setter Property="MaxWidth" Value="600"/>
+            <Setter Property="MinHeight" Value="200"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{Binding IsAnswered, Converter={StaticResource AnsweredToBorderConverter}}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+    </Window.Resources>
+    <Grid Background="{StaticResource BackgroundColor}">
+        <!-- Основной контент -->
+        <TabControl x:Name="MainTabControl" SelectionChanged="MainTabControl_SelectionChanged">
             <TabItem Header="Обращения">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -15,39 +39,114 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Фильтр и поиск -->
                     <WrapPanel Orientation="Horizontal" Margin="10" VerticalAlignment="Top">
-                        <TextBox x:Name="SearchBox" Width="180" Height="25" TextChanged="SearchBox_TextChanged" VerticalAlignment="Center" 
-                                 Margin="0,0,10,0" />
-                        <ComboBox x:Name="StatusFilterBox" Width="140" SelectionChanged="FilterChanged"
-                                  Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,10,0">
+                        <CheckBox x:Name="ShowUnansweredOnly" Content="Только без ответа" IsChecked="True" Margin="0,0,10,0" Checked="UnansweredFilter_Checked" Unchecked="UnansweredFilter_Checked" Style="{StaticResource MaterialDesignCheckBox}"/>
+                        <TextBox x:Name="SearchBox" Width="180" materialDesign:HintAssist.Hint="Поиск" TextChanged="SearchBox_TextChanged" Margin="0,0,10,0" Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
+                        <ComboBox x:Name="StatusFilterBox" Width="140" SelectionChanged="FilterChanged" Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,10,0">
                             <ComboBoxItem Content="Все" IsSelected="True"/>
                             <ComboBoxItem Content="Новое"/>
                             <ComboBoxItem Content="В обработке"/>
                             <ComboBoxItem Content="Рассмотрено"/>
                             <ComboBoxItem Content="Отклонено"/>
                         </ComboBox>
-                        <ComboBox x:Name="CategoryFilterBox" Width="140" SelectionChanged="FilterChanged"
-                                  Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,10,0"/>
-                        <Button Content="Очистить фильтр" Click="ClearFilter_Click"
-                                Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
+                        <ComboBox x:Name="CategoryFilterBox" Width="140" SelectionChanged="FilterChanged" Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,10,0"/>
+                        <Button Content="Очистить фильтр" Click="ClearFilter_Click" Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
                     </WrapPanel>
-
-                    <!-- Таблица обращений -->
-                    <DataGrid x:Name="ApplicationsGrid" AutoGenerateColumns="True" Margin="10" Grid.Row="1" 
-                              SelectionChanged="ApplicationsGrid_SelectionChanged" Style="{StaticResource MaterialDesignDataGrid}" />
-
-                    <!-- Кнопки управления -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10" Grid.Row="2">
-                        <Button Content="Удалить обращение" Width="180" Click="DeleteApplication_Click"
-                                Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,10,0"/>
-                        <Button Content="Открыть чат" Width="150" Click="OpenChat_Click"
-                                Style="{StaticResource MaterialDesignRaisedButton}"/>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="True" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <ListBox x:Name="ApplicationsList" Margin="0" SelectionChanged="ApplicationsList_SelectionChanged" MouseDoubleClick="ApplicationsList_MouseDoubleClick" 
+                                 VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True"
+                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Left">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}" VerticalAlignment="Top"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <materialDesign:Card 
+                                        Style="{StaticResource CardStyle}"
+                                        Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=WrapPanel}, Converter={StaticResource WidthToCardWidthConverter}}">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock 
+                                                Text="{Binding FullName}" 
+                                                FontWeight="Bold" 
+                                                FontSize="16" 
+                                                TextWrapping="Wrap" 
+                                                Foreground="#212121"/>
+                                            <Border 
+                                                Grid.Row="1"
+                                                Margin="0,8,0,0"
+                                                Padding="8,4"
+                                                Background="{Binding Status, Converter={StaticResource StatusToBackgroundConverter}}"
+                                                CornerRadius="12"
+                                                HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding CategoryName}" 
+                                                   Foreground="White" 
+                                                   FontWeight="SemiBold"/>
+                                            </Border>
+                                            <TextBlock 
+                                                Grid.Row="2" 
+                                                Text="{Binding Description, StringFormat='Описание: {0}'}" 
+                                                FontSize="14" 
+                                                TextWrapping="Wrap" 
+                                                Margin="0,8,0,0" 
+                                                MaxHeight="80" 
+                                                TextTrimming="CharacterEllipsis" 
+                                                Foreground="#B0BEC5"/>
+                                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+                                                <TextBlock 
+                                                    Text="{Binding SubmissionDate, StringFormat='{}Дата: {0:dd.MM.yyyy HH:mm}'}" 
+                                                    FontSize="12" 
+                                                    Foreground="#B0BEC5"/>
+                                                <materialDesign:PackIcon 
+                                                    Kind="Alert" 
+                                                    Visibility="{Binding IsAnswered, Converter={StaticResource AnsweredToVisibilityConverter}}" 
+                                                    Foreground="#D32F2F" 
+                                                    Margin="8,0,0,0" 
+                                                    VerticalAlignment="Center" 
+                                                    Width="20" 
+                                                    Height="20">
+                                                    <materialDesign:PackIcon.Style>
+                                                        <Style TargetType="materialDesign:PackIcon">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAnswered}" Value="False">
+                                                                    <DataTrigger.EnterActions>
+                                                                        <BeginStoryboard>
+                                                                            <Storyboard>
+                                                                                <DoubleAnimation
+                                                                                    Storyboard.TargetProperty="Opacity"
+                                                                                    From="1.0" To="0.4" Duration="0:0:0.8"
+                                                                                    AutoReverse="True" RepeatBehavior="Forever"/>
+                                                                            </Storyboard>
+                                                                        </BeginStoryboard>
+                                                                    </DataTrigger.EnterActions>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </materialDesign:PackIcon.Style>
+                                                </materialDesign:PackIcon>
+                                            </StackPanel>
+                                        </Grid>
+                                    </materialDesign:Card>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
+                        <Button Content="Предыдущая" Width="120" Click="PreviousPage_Click" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="PageInfoText" Text="Страница 1 из 1" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Content="Следующая" Width="120" Click="NextPage_Click" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button Content="Удалить обращение" Width="180" Click="DeleteApplication_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="10,0,10,0"/>
+                        <Button Content="Открыть чат" Width="150" Click="OpenChat_Click" Style="{StaticResource MaterialDesignRaisedButton}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-
             <TabItem Header="Граждане">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -55,31 +154,22 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Поиск и фильтр -->
                     <StackPanel Orientation="Horizontal" Margin="10" VerticalAlignment="Top">
-                        <TextBox x:Name="CitizenSearchBox" Width="180" Height="30" TextChanged="CitizenSearchBox_TextChanged" 
-                                 Margin="0,0,10,0"/>
-                        <DatePicker x:Name="RegistrationDateFilter" Width="160" SelectedDateChanged="FilterCitizens"
-                                    Style="{StaticResource MaterialDesignDatePicker}" Margin="0,0,10,0"/>
-                        <Button Content="Очистить фильтр" Click="ClearCitizenFilter_Click"
-                                Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
+                        <TextBox x:Name="CitizenSearchBox" Width="180" Height="30" TextChanged="CitizenSearchBox_TextChanged" Margin="0,0,10,0"/>
+                        <DatePicker x:Name="RegistrationDateFilter" Width="160" SelectedDateChanged="FilterCitizens" Style="{StaticResource MaterialDesignDatePicker}" Margin="0,0,10,0"/>
+                        <Button Content="Очистить фильтр" Click="ClearCitizenFilter_Click" Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
                     </StackPanel>
-
-                    <!-- Таблица -->
-                    <DataGrid x:Name="CitizensGrid" AutoGenerateColumns="True" Margin="10" Grid.Row="1" 
-                              SelectionChanged="CitizensGrid_SelectionChanged" Style="{StaticResource MaterialDesignDataGrid}"/>
-
-                    <!-- Кнопки управления -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10" Grid.Row="2">
-                        <Button Content="Удалить гражданина" Width="180" Click="DeleteCitizen_Click"
-                                Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,10,0"/>
-                        <Button Content="Редактировать" Width="150" Click="EditCitizen_Click"
-                                Style="{StaticResource MaterialDesignRaisedButton}"/>
+                    <DataGrid x:Name="CitizensGrid" AutoGenerateColumns="True" Margin="10" Grid.Row="1" SelectionChanged="CitizensGrid_SelectionChanged" Style="{StaticResource MaterialDesignDataGrid}"
+                              VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
+                        <Button Content="Предыдущая" Width="120" Click="PreviousCitizenPage_Click" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="CitizenPageInfoText" Text="Страница 1 из 1" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Content="Следующая" Width="120" Click="NextCitizenPage_Click" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button Content="Удалить гражданина" Width="180" Click="DeleteCitizen_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="10,0,10,0"/>
+                        <Button Content="Редактировать" Width="150" Click="EditCitizen_Click" Style="{StaticResource MaterialDesignRaisedButton}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-
             <TabItem Header="Категории">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -87,32 +177,150 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Поиск -->
                     <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" VerticalAlignment="Top">
-                        <TextBox x:Name="CategorySearchBox" Width="180" Height="30" TextChanged="CategorySearchBox_TextChanged" 
-                                Margin="0,0,10,0"/>
-                        <Button Content="Очистить фильтр" Click="ClearCategoryFilter_Click"
-                                Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
+                        <TextBox x:Name="CategorySearchBox" Width="180" Height="30" TextChanged="CategorySearchBox_TextChanged" Margin="0,0,10,0"/>
+                        <Button Content="Очистить фильтр" Click="ClearCategoryFilter_Click" Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
                     </StackPanel>
-
-                    <!-- Таблица категорий -->
-                    <DataGrid x:Name="CategoriesGrid" Margin="10" SelectionChanged="CategoriesGrid_SelectionChanged" 
-                              Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="False" 
-                              Style="{StaticResource MaterialDesignDataGrid}"/>
-
-                    <!-- Кнопки управления -->
+                    <DataGrid x:Name="CategoriesGrid" Margin="10" SelectionChanged="CategoriesGrid_SelectionChanged" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="False" Style="{StaticResource MaterialDesignDataGrid}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
-                        <Button Content="Добавить" Click="AddCategory_Click" Width="100" Margin="5"
-                                Style="{StaticResource MaterialDesignRaisedButton}"/>
-                        <Button Content="Редактировать" Click="EditCategory_Click" Width="150" Margin="5"
-                                Style="{StaticResource MaterialDesignRaisedButton}"/>
-                        <Button Content="Удалить" Click="DeleteCategory_Click" Width="100" Margin="5"
-                                Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="Добавить" Click="AddCategory_Click" Width="100" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="Редактировать" Click="EditCategory_Click" Width="150" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="Удалить" Click="DeleteCategory_Click" Width="100" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-
+            <TabItem Header="Опросы">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" VerticalAlignment="Top">
+                        <TextBox x:Name="PollSearchBox" Width="180" Height="30" TextChanged="PollSearchBox_TextChanged" Margin="0,0,10,0"/>
+                        <ComboBox x:Name="PollStatusFilterBox" Width="140" SelectionChanged="PollFilterChanged" Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,10,0">
+                            <ComboBoxItem Content="Все" IsSelected="True"/>
+                            <ComboBoxItem Content="Активные"/>
+                            <ComboBoxItem Content="Завершённые"/>
+                        </ComboBox>
+                        <Button Content="Очистить фильтр" Click="ClearPollFilter_Click" Style="{StaticResource MaterialDesignFlatButton}" Width="150"/>
+                    </StackPanel>
+                    <DataGrid x:Name="PollsGrid" Margin="10" Grid.Row="1" AutoGenerateColumns="True" SelectionChanged="PollsGrid_SelectionChanged" Style="{StaticResource MaterialDesignDataGrid}"
+                              VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
+                        <Button Content="Предыдущая" Width="120" Click="PreviousPollPage_Click" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="PollPageInfoText" Text="Страница 1 из 1" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Content="Следующая" Width="120" Click="NextPollPage_Click" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button Content="Добавить" Click="AddPoll_Click" Width="100" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="Редактировать" Click="EditPoll_Click" Width="150" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="Удалить" Click="DeletePoll_Click" Width="100" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Статистика">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15" HorizontalAlignment="Center">
+                        <materialDesign:Card Margin="10" Padding="15" Width="300" Background="#2196F3" Foreground="White">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ClipboardText" VerticalAlignment="Center" Margin="0,0,10,0" Width="34" Height="24"/>
+                                <TextBlock x:Name="TotalApplicationsText" Text="Обращений: 0" FontSize="16" FontWeight="Bold"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+                        <materialDesign:Card Margin="10" Padding="15" Width="300" Background="#4CAF50" Foreground="White">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountMultiple" VerticalAlignment="Center" Margin="0,0,10,0" Width="34" Height="24"/>
+                                <TextBlock x:Name="TotalCitizensText" Text="Граждан: 0" FontSize="16" FontWeight="Bold"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+                        <materialDesign:Card Margin="10" Padding="15" Width="300" Background="#F44336" Foreground="White">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Tag" VerticalAlignment="Center" Margin="0,0,10,0" Width="34" Height="24"/>
+                                <TextBlock x:Name="TotalCategoriesText" Text="Категорий: 0" FontSize="16" FontWeight="Bold"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+                    </StackPanel>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <materialDesign:Card Grid.Column="0" Margin="10" Padding="15" Background="White">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Результаты опросов" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="PollStatsComboBox" Width="200" Margin="10,0,0,0" SelectionChanged="PollStatsComboBox_SelectionChanged" Style="{StaticResource MaterialDesignComboBox}" DisplayMemberPath="Title"/>
+                                </StackPanel>
+                                <lvc:CartesianChart x:Name="PollStatsChart" Grid.Row="1" Height="250" Margin="0,10,0,0" AnimationsSpeed="0:0:0.5">
+                                    <lvc:CartesianChart.DataTooltip>
+                                        <lvc:DefaultTooltip Background="#BBDEFB"/>
+                                    </lvc:CartesianChart.DataTooltip>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+                        <materialDesign:Card Grid.Column="1" Margin="10" Padding="15" Background="White">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Статусы обращений" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <lvc:CartesianChart x:Name="ApplicationStatusChart" Grid.Row="1" Height="250" Margin="0,10,0,0" AnimationsSpeed="0:0:0.5">
+                                    <lvc:CartesianChart.DataTooltip>
+                                        <lvc:DefaultTooltip Background="#D1C4E9"/>
+                                    </lvc:CartesianChart.DataTooltip>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                    <materialDesign:Card Grid.Row="2" Margin="10" Padding="15" Background="White">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Регистрация граждан по месяцам" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <lvc:CartesianChart x:Name="CitizenRegistrationChart" Grid.Row="1" Height="250" Margin="0,10,0,0" AnimationsSpeed="0:0:0.5">
+                                <lvc:CartesianChart.DataTooltip>
+                                    <lvc:DefaultTooltip Background="#C8E6C9"/>
+                                </lvc:CartesianChart.DataTooltip>
+                            </lvc:CartesianChart>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
         </TabControl>
+        <!-- Оверлей загрузки -->
+        <Grid x:Name="LoadingOverlay" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="1000">
+            <materialDesign:Card Background="White" Padding="20" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Loading" Width="30" Height="30" VerticalAlignment="Center">
+                        <materialDesign:PackIcon.RenderTransform>
+                            <RotateTransform x:Name="LoadingRotate" CenterX="15" CenterY="15"/>
+                        </materialDesign:PackIcon.RenderTransform>
+                        <materialDesign:PackIcon.Triggers>
+                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LoadingRotate" 
+                                                         Storyboard.TargetProperty="Angle" 
+                                                         From="0" To="360" Duration="0:0:2" RepeatBehavior="Forever"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </materialDesign:PackIcon.Triggers>
+                    </materialDesign:PackIcon>
+                    <TextBlock Text="Загрузка..." FontSize="16" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
     </Grid>
 </Window>
